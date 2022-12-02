@@ -1,15 +1,18 @@
 conntask_info:
     task_list:
-        task: "SpiralSearch"
-        connfig: "connfig_peg_10mm"
-        position: "hole_10mm"
+        task: "BNCTask"
+        connfig: "connfig_BNC_8mm"
+        position: "bnc_connector"    # task_list:
+    #     task: "SpiralSearch"
+    #     connfig: "connfig_peg_10mm"
+    #     position: "hole_10mm"
 environment_state: #needed by Node
     task_frame:
         position: [-268, -105, 20]
         orientation: [0, 0, 180]
-    kitting_frame:
-        position: [640, 544, -502]
-        orientation: [0, 0, 0]
+    # kitting_frame:
+    #     position: [640, 544, -502]
+    #     orientation: [0, 0, 0]
 assembled_state: #List the desired assembled state #Not needed
     peg:
         position: [1, 2, 3] #Trasformation from peg.local_part_pose relative to chosen Newtonian inertial frame
@@ -19,23 +22,26 @@ objects: #List objects and their required description. For this example, we only
     hole_10mm:
         local_position: [264, -41.3, 0] #Starting position from task_frame
         local_orientation: [0,0,0] #Degrees
-        dimensions:
-            diameter: 10.4 #mm
-            depth: 20 #mm
-            upper_tolerance:  0.01 #e.g., H7 (ISO 286)
-            lower_tolerance:  0.00 #e.g., H7 (ISO 286)
-        material: "stainless steel"
-    hole_8mm:
-        stl_file: "file_location.stl"
-        local_position: [36, -116, 0] #Starting position from task_frame
-        local_orientation: [0,0,0]
-        dimensions:
-            diameter: 8.4 #mm
-            depth: 20 #mm
-        tolerance:
-            upper_tolerance:  0.01 #e.g., H7 (ISO 286)
-            lower_tolerance:  0.00 #e.g., H7 (ISO 286)
-        material: "stainless steel"
+        # dimensions:
+        #     diameter: 10.4 #mm
+        #     depth: 20 #mm
+        #     upper_tolerance:  0.01 #e.g., H7 (ISO 286)
+        #     lower_tolerance:  0.00 #e.g., H7 (ISO 286)
+        # material: "stainless steel"
+    bnc_connector:
+        local_position: [90, -193, 12] #Starting position from task_frame
+        local_orientation: [0,0,0] #Degrees
+    # hole_8mm:
+    #     stl_file: "file_location.stl"
+    #     local_position: [36, -116, 0] #Starting position from task_frame
+    #     local_orientation: [0,0,0]
+    #     dimensions:
+    #         diameter: 8.4 #mm
+    #         depth: 20 #mm
+    #     tolerance:
+    #         upper_tolerance:  0.01 #e.g., H7 (ISO 286)
+    #         lower_tolerance:  0.00 #e.g., H7 (ISO 286)
+    #     material: "stainless steel"
 
 #    peg_10mm: #spiral-search conntask needs the "safe tolerance" and the min insertion depth.
 #        stl_file: "file_location.stl"

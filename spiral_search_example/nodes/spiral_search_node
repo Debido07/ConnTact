@@ -10,14 +10,15 @@ from colorama import Back, Fore, Style, init
 # import tf2_ros
 # from geometry_msgs.msg import WrenchStamped, Wrench, TransformStamped, PoseStamped, Pose, Point, Quaternion, Vector3, Transform
 # from std_msgs.msg import String
-
+from spiral_search_example.bnc_task import BNCTask
 from spiral_search_example.spiral_search import SpiralSearch
 from conntact.ros_conntact_interface import ConntactROSInterface
 from conntact.conntext import Conntext
 
 package_name = "spiral_search_example"
 conntasks = {
-    "SpiralSearch": SpiralSearch
+    "SpiralSearch": SpiralSearch,
+    "BNCTask" : BNCTask
 }
 
 def read_board_positions(target_hole: str, params: dict):
