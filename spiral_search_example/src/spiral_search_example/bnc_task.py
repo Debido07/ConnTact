@@ -14,10 +14,11 @@ START_STATE    = 'state_start'
 APPROACH_STATE = 'state_finding_surface'
 FIND_HOLE_STATE = 'state_finding_hole'
 INSERTING_PEG_STATE = 'state_inserting_along_axis'
+THREAD_STATE = 'thread_state'
 COMPLETION_STATE = 'state_completed_insertion'
 EXIT_STATE = 'state_exit'
 SAFETY_RETRACT_STATE = 'state_safety_retraction'
-FIRST_INSERTING_PEG_STATE = 'state_first_insertion'
+CONTACT_CAM_PEGS_STATE = 'state_first_insertion'
 ROTATE_PEG_STATE = 'state_rotate_peg'
 
 # Trigger names
@@ -39,9 +40,10 @@ class BNCTask(ConnTask):
             START_STATE,
             APPROACH_STATE,
             FIND_HOLE_STATE, 
-            FIRST_INSERTING_PEG_STATE, 
+            CONTACT_CAM_PEGS_STATE, 
             ROTATE_PEG_STATE,
-            INSERTING_PEG_STATE, 
+            INSERTING_PEG_STATE,
+            THREAD_STATE, 
             COMPLETION_STATE,
             EXIT_STATE,
             SAFETY_RETRACT_STATE
@@ -54,10 +56,11 @@ class BNCTask(ConnTask):
         transitions = [
             {'trigger':APPROACH_SURFACE_TRIGGER  , 'source':START_STATE         , 'dest':APPROACH_STATE         },
             {'trigger':STEP_COMPLETE_TRIGGER     , 'source':APPROACH_STATE      , 'dest':FIND_HOLE_STATE        },
-            {'trigger':STEP_COMPLETE_TRIGGER     , 'source':FIND_HOLE_STATE     , 'dest':FIRST_INSERTING_PEG_STATE    },
-            {'trigger':STEP_COMPLETE_TRIGGER     , 'source':FIRST_INSERTING_PEG_STATE , 'dest':ROTATE_PEG_STATE      },
+            {'trigger':STEP_COMPLETE_TRIGGER     , 'source':FIND_HOLE_STATE     , 'dest':CONTACT_CAM_PEGS_STATE    },
+            {'trigger':STEP_COMPLETE_TRIGGER     , 'source':CONTACT_CAM_PEGS_STATE , 'dest':ROTATE_PEG_STATE      },
             {'trigger':STEP_COMPLETE_TRIGGER     , 'source':ROTATE_PEG_STATE, 'dest':INSERTING_PEG_STATE      },
-            {'trigger':STEP_COMPLETE_TRIGGER     , 'source':INSERTING_PEG_STATE , 'dest':COMPLETION_STATE       },
+            {'trigger':STEP_COMPLETE_TRIGGER     , 'source':INSERTING_PEG_STATE , 'dest':THREAD_STATE       },
+            {'trigger':STEP_COMPLETE_TRIGGER     , 'source':THREAD_STATE , 'dest':EXIT_STATE       },
             {'trigger':STEP_COMPLETE_TRIGGER     , 'source':COMPLETION_STATE    , 'dest':EXIT_STATE             },
             {'trigger':SAFETY_RETRACTION_TRIGGER , 'source':'*'                 , 'dest':SAFETY_RETRACT_STATE,
               'unless':'is_already_retracting' },
@@ -67,9 +70,10 @@ class BNCTask(ConnTask):
 
         self.step_list:dict = { APPROACH_STATE:       (FindSurface, []),
                                 FIND_HOLE_STATE:      (SpiralToFindHole, []),
-                                FIRST_INSERTING_PEG_STATE:  (FindSurfaceFullCompliant, []),
-                                ROTATE_PEG_STATE:     (RotatePeg, []),
+                                CONTACT_CAM_PEGS_STATE:  (FindSurfaceFullCompliant, []),
+                                ROTATE_PEG_STATE:     (RotatePeg, [[0,0,359], .20]),
                                 INSERTING_PEG_STATE:  (FindSurfaceFullCompliant, []),
+                                THREAD_STATE:         (RotatePeg, [[0,0,-359], .35]),
                                 SAFETY_RETRACT_STATE: (SafetyRetraction, []),
                                 COMPLETION_STATE:     (ExitStep, [])
                                 }
@@ -172,33 +176,33 @@ class FindSurfaceFullCompliant(ConnStep):
         self.exitPeriod = 1
 
         self.create_move_policy(move_mode="free",
-                            force = [0, 0, -20])
+                            force = [0, 0, -15])
 
     def exit_conditions(self) -> bool:
-        self.move_policy.orientation = utils.qToEu(self.conntext.current_pose.transform.rotation)
+        # self.move_policy.orientation = utils.qToEu(self.conntext.current_pose.transform.rotation)
         self.conntext.interface.send_info("Current force is {}".format(self.conntext.current_wrench.wrench.force), 1)
         return self.is_static() and self.in_collision()
 
 class RotatePeg(ConnStep):
-    def __init__(self, connTask: (ConnTask)) -> None:
+    def __init__(self, connTask: (ConnTask), setpoint, torque_threshhold) -> None:
         ConnStep.__init__(self, connTask)
         self.exitPeriod = .05
         self.create_move_policy(move_mode="free",
                             force = [0, 0, -5])
-        self.cycle_period = 8
+        self.cycle_period = 14
         self.surface_height = self.conntext.current_pose.transform.translation.z
         self.start_time = self.conntext.interface.get_unified_time(float=True)
+        self.setpoint = setpoint
+        self.torque_thresh = torque_threshhold
 
     def exit_conditions(self) -> bool:
         self.conntext.interface.send_info("Current wrench is {}".format(self.conntext.current_wrench.wrench.torque), 1)
-        return self.conntext.current_pose.transform.translation.z <= self.surface_height - .005 or \
-            abs(self.conntext.current_wrench.wrench.torque.z) > .25
-
+        return self.conntext.current_pose.transform.translation.z <= self.surface_height - .002 or \
+            abs(self.conntext.current_wrench.wrench.torque.z) > self.torque_thresh
 
     def execute(self):
         curr_time = self.conntext.interface.get_unified_time(float=True) - self.start_time
-        param = 130*(abs( ((curr_time % self.cycle_period)/self.cycle_period)-0.5)*2)
-        self.move_policy.orientation = [0,0,param]
+        self.move_policy.orientation = self.setpoint
 
 
 class SpiralToFindHole(ConnStep):

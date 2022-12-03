@@ -2,10 +2,11 @@ conntask_info:
     task_list:
         task: "BNCTask"
         connfig: "connfig_BNC_8mm"
-        position: "bnc_connector"    # task_list:
-    #     task: "SpiralSearch"
-    #     connfig: "connfig_peg_10mm"
-    #     position: "hole_10mm"
+        position: "bnc_connector"    
+    # task_list:
+        # task: "SpiralSearch"
+        # connfig: "connfig_peg_10mm"
+        # position: "hole_10mm"
 environment_state: #needed by Node
     task_frame:
         position: [-268, -105, 20]
@@ -29,7 +30,7 @@ objects: #List objects and their required description. For this example, we only
         #     lower_tolerance:  0.00 #e.g., H7 (ISO 286)
         # material: "stainless steel"
     bnc_connector:
-        local_position: [90, -193, 12] #Starting position from task_frame
+        local_position: [80, -193, 12] #Starting position from task_frame
         local_orientation: [0,0,0] #Degrees
     # hole_8mm:
     #     stl_file: "file_location.stl"

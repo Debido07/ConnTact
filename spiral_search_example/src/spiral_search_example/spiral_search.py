@@ -142,6 +142,7 @@ class FindSurface(ConnStep):
         # Create a move policy which will move downward along a line
         # at x=0, y=0
         self.create_move_policy(move_mode="line",
+                                orientation=[0,0,0],
                                 vector=[0,0,1],
                                 origin=[0,0,0],
                                 force=[0, 0, -7])
