@@ -30,7 +30,7 @@ objects: #List objects and their required description. For this example, we only
         #     lower_tolerance:  0.00 #e.g., H7 (ISO 286)
         # material: "stainless steel"
     bnc_connector:
-        local_position: [80, -193, 12] #Starting position from task_frame
+        local_position: [98, -189, 12] #Starting position from task_frame
         local_orientation: [0,0,0] #Degrees
     # hole_8mm:
     #     stl_file: "file_location.stl"

@@ -174,12 +174,16 @@ class FindSurfaceFullCompliant(ConnStep):
     def __init__(self, connTask: (ConnTask)) -> None:
         ConnStep.__init__(self, connTask)
         self.exitPeriod = 1
+        full_orientation = utils.qToEu(self.conntext.current_pose.transform.rotation)
+        self.z_orientation = full_orientation[2]
 
         self.create_move_policy(move_mode="free",
                             force = [0, 0, -15])
 
     def exit_conditions(self) -> bool:
         # self.move_policy.orientation = utils.qToEu(self.conntext.current_pose.transform.rotation)
+        self.move_policy.orientation[2] = self.z_orientation
+        print(f'Current orientation is: {self.conntext.current_pose.transform.rotation}\n')
         self.conntext.interface.send_info("Current force is {}".format(self.conntext.current_wrench.wrench.force), 1)
         return self.is_static() and self.in_collision()
 
@@ -188,11 +192,15 @@ class RotatePeg(ConnStep):
         ConnStep.__init__(self, connTask)
         self.exitPeriod = .05
         self.create_move_policy(move_mode="free",
-                            force = [0, 0, -5])
+                            force = [0, 0, -10])
         self.cycle_period = 14
         self.surface_height = self.conntext.current_pose.transform.translation.z
         self.start_time = self.conntext.interface.get_unified_time(float=True)
-        self.setpoint = setpoint
+        '''Save current x/y orientations and set the next orientation to current orientation
+        This should help with the tilt issues while rotating the peg, ensuring the x/y orientation
+        Stays as it was prior to starting the rotate (should be close to 0)'''
+        self.setpoint = utils.qToEu(self.conntext.current_pose.transform.rotation)
+        self.setpoint[2] = setpoint[2]
         self.torque_thresh = torque_threshhold
 
     def exit_conditions(self) -> bool:
@@ -202,6 +210,7 @@ class RotatePeg(ConnStep):
 
     def execute(self):
         curr_time = self.conntext.interface.get_unified_time(float=True) - self.start_time
+        print(f'Current orientation is: {self.conntext.current_pose.transform.rotation}\n')
         self.move_policy.orientation = self.setpoint
 
 
@@ -213,9 +222,10 @@ class SpiralToFindHole(ConnStep):
                     force = [0, 0, -7],
                     origin = [0,0,0])
         self.spiral_params = self.task.connfig['task']['spiral_params']
-        self.safe_clearance = self.task.connfig['objects']['dimensions']['safe_clearance']/100 #convert to m
+        self.safe_clearance = self.task.connfig['objects']['dimensions']['safe_clearance']/1000 #convert to m
         self.start_time = self.conntext.interface.get_unified_time()
-        self.exitPeriod = .025 
+        self.exitPeriod = .05
+        self.curr_amp = 0
 
     def execute(self):
         '''
@@ -237,10 +247,10 @@ class SpiralToFindHole(ConnStep):
         curr_time = self.conntext.interface.get_unified_time() - self.start_time
         curr_time_numpy = np.double(curr_time.to_sec())
         frequency = self.spiral_params['frequency'] #because we refer to it a lot
-        curr_amp = self.spiral_params['min_amplitude'] + self.safe_clearance * \
-                   np.mod(2.0 * np.pi * frequency * curr_time_numpy, self.spiral_params['max_cycles']);
-        x_pos = curr_amp * np.cos(2.0 * np.pi * frequency * curr_time_numpy)
-        y_pos = curr_amp * np.sin(2.0 * np.pi * frequency * curr_time_numpy)
+        rotation = frequency * curr_time_numpy
+        self.curr_amp = self.spiral_params['min_amplitude'] + self.safe_clearance * rotation
+        x_pos = self.curr_amp * np.cos(2.0 * np.pi * frequency * curr_time_numpy)
+        y_pos = self.curr_amp * np.sin(2.0 * np.pi * frequency * curr_time_numpy)
         # These values can remain zero because the pos_vec command is interpreted relative to the task frame:
 
         # x_pos = x_pos + self.task.x_pos_offset

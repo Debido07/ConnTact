@@ -7,15 +7,15 @@ task:
   restart_height: 10 #cm. how far we retreat above detected surface to restart
   spiral_params:
     frequency: 0.25 #Hz frequency in spiral_search_motion
-    min_amplitude: .005  #meters amplitude in spiral_search_motion
-    max_amplitude: .012 #mm
+    min_amplitude: .001  #meters amplitude in spiral_search_motion
+    max_amplitude: .010  #m
     max_cycles: 62.83 #2*pi*10 for 10 revolutions
 objects:
   dimensions:
     diameter: 10 #mm
     # length: 50 #mm
     min_insertion_depth: 5 #mm : minimum depth the item must insert before considering job complete; "feeling" it stop is the end condition
-    safe_clearance: .02      #mm : how far apart can each spiral pass be without missing the hole?
+    safe_clearance: 1      #mm : how far apart can each spiral pass be without missing the hole?
   # material: "stainless steel"
   grasping_locations: #points of interest on the pin
     tip:

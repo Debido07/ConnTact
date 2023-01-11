@@ -17,7 +17,8 @@ from conntact.conntext import Conntext
 
 package_name = "spiral_search_example"
 conntasks = {
-    "SpiralSearch": SpiralSearch,
+    #.000000000
+    # "SpiralSearch": SpiralSearch,
     "BNCTask" : BNCTask
 }
 
